@@ -478,8 +478,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         }
         
         numberOfPassengers += 1
-        if numberOfPassengers > 6 {
-            let alert = UIAlertController(title: "Buzz!", message: "We can only fit 6 passengers. Someone's walking!", preferredStyle: UIAlertControllerStyle.Alert)
+        if numberOfPassengers > 5 {
+            let alert = UIAlertController(title: "Buzz!", message: "We can only fit 5 passengers. Someone's walking!", preferredStyle: UIAlertControllerStyle.Alert)
             alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
             self.presentViewController(alert, animated: true, completion: nil)
             
