@@ -38,6 +38,7 @@ class Ride {
     var userRoute : MKRoute?
     var driverRoute : MKRoute?
     var estimatedWaitTime : Int?
+    let messageComposer = MessageComposer()
     
     // Queue Information
     var numberOfDrivers : Int?
@@ -100,7 +101,7 @@ class Ride {
                 let partySize : String = rideElement.1
                 numberOfPassengers = Int(partySize)
             } else if rideElement.0 == "phone" {
-                driverPhoneNumber = rideElement.1
+                passengerPhoneNumber = rideElement.1
             } else if rideElement.0 == "startAdd" {
                 passengerPickUpLocationString = rideElement.1
             }
@@ -205,7 +206,8 @@ class Ride {
     }
     
     func messageDriver() {
-        if let phoneNumber = self.driverPhoneNumber, let messageComposer = MessageComposer(phoneNumber: phoneNumber) {
+        if let phoneNumber = self.driverPhoneNumber {
+            self.messageComposer.textMessageRecipient = phoneNumber
             if (messageComposer.canSendText()) {
                 let messageComposeVC = messageComposer.configuredMessageComposeViewController()
                 self.viewController?.presentViewController(messageComposeVC, animated: true, completion: nil)

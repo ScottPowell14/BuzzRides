@@ -40,6 +40,7 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     var rideStartLocationCoord : CLLocationCoordinate2D?
     var rideEndLocationCoord : CLLocationCoordinate2D?
     var rideDatabaseKey : String?
+    let messageComposer = MessageComposer()
     
     // Driver Information
     let locationManager = CLLocationManager()
@@ -233,7 +234,8 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     
     
     @IBAction func messageRider(sender: AnyObject) {
-        if let phoneNumber = self.passengerPhoneNumber, let messageComposer = MessageComposer(phoneNumber: phoneNumber) {
+        if let phoneNumber = self.passengerPhoneNumber {
+            self.messageComposer.textMessageRecipient = phoneNumber
             if (messageComposer.canSendText()) {
                 let messageComposeVC = messageComposer.configuredMessageComposeViewController()
                 self.presentViewController(messageComposeVC, animated: true, completion: nil)

@@ -13,10 +13,6 @@ class MessageComposer: NSObject, MFMessageComposeViewControllerDelegate {
     
     var textMessageRecipient : String?
     
-    init?(phoneNumber : String) {
-        self.textMessageRecipient = phoneNumber
-    }
-    
     // A wrapper function to indicate whether or not a text message can be sent from the user's device
     func canSendText() -> Bool {
         return MFMessageComposeViewController.canSendText()
