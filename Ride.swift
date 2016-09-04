@@ -199,14 +199,20 @@ class Ride {
     }
     
     func callDriver() {
-        if let url = NSURL(string: "tel://\(self.driverPhoneNumber)") {
+        if let phoneNumber = self.driverPhoneNumber, let url = NSURL(string: "tel://\(phoneNumber)")  {
             UIApplication.sharedApplication().openURL(url)
         }
     }
     
     func messageDriver() {
-        if let url = NSURL(string: "sms:\(self.driverPhoneNumber)") {
-            UIApplication.sharedApplication().openURL(url)
+        if let phoneNumber = self.driverPhoneNumber, let messageComposer = MessageComposer(phoneNumber: phoneNumber) {
+            if (messageComposer.canSendText()) {
+                let messageComposeVC = messageComposer.configuredMessageComposeViewController()
+                self.viewController?.presentViewController(messageComposeVC, animated: true, completion: nil)
+            } else {
+                let alert = UIAlertController(title: "Buzz!", message: "Your device is unable to send text messages right now.", preferredStyle: UIAlertControllerStyle.Alert)
+                self.viewController?.presentAlert(alert)
+            }
         }
     }
     
@@ -324,12 +330,10 @@ class Ride {
         })
         
         _refForRideHandle = self.refToRideData.observeEventType(.ChildRemoved, withBlock: { (snapshot) -> Void in
-            // this might mean that the driver cancelled the ride
+            // this might mean that the driver cancelled the ride -- In which case, ride is over, show modal view
             if self.viewController!.userCurrentlyOnRide! {
-                let alert = UIAlertController(title: "Buzz!", message: "Ride has ended.", preferredStyle: UIAlertControllerStyle.Alert)
-                alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-                self.viewController?.presentViewController(alert, animated: true, completion: nil)
                 self.viewController?.cancelButtonPressed()
+                self.viewController?.showRideCompletedView()
             }
         })
         

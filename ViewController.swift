@@ -33,6 +33,10 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     var routeOverlay : MKOverlay?
     @IBOutlet weak var requestButton: UIButton!
     @IBOutlet weak var showProfileButton: UIButton!
+    @IBOutlet weak var completedRideView: UIView!
+    weak var blurView : UIView?
+    
+    
     
     // Ride Information View UI
     @IBOutlet weak var rideInfoView: UIView!
@@ -218,6 +222,29 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             self.driverImage.image = image
         }
     }
+    
+    func showRideCompletedView() {
+        if !UIAccessibilityIsReduceTransparencyEnabled() {
+            let blurEffect = UIBlurEffect(style: .Light)
+            let blurEffectView = UIVisualEffectView(effect: blurEffect)
+            //always fill the view
+            blurEffectView.frame = self.view.bounds
+            self.view.addSubview(blurEffectView)
+            self.blurView = blurEffectView
+        }
+        self.completedRideView.hidden = false
+        self.view.bringSubviewToFront(self.completedRideView)
+    }
+    
+    
+    @IBAction func completedRideAcknowledged(sender: AnyObject) {
+        if self.blurView != nil {
+            self.blurView!.removeFromSuperview()
+            self.blurView = nil
+        }
+        self.completedRideView.hidden = true
+    }
+    
     
     @IBAction func callDriver(sender: AnyObject) {
         if let curRide = currentRide {
@@ -482,6 +509,16 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         myLineRenderer.lineWidth = 8
         return myLineRenderer
     }
+    
+    
+    // Alert View
+    func presentAlert(alert : UIAlertController?) {
+        if let alertError = alert {
+            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
+            self.presentViewController(alertError, animated: true, completion: nil)
+        }
+    }
+    
     
     // MARK: - Navigation
     

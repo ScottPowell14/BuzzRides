@@ -264,6 +264,50 @@
                                     <constraint firstItem="KUf-7j-FVL" firstAttribute="leading" secondItem="7tN-FE-EKX" secondAttribute="leadingMargin" id="mFO-yj-sKG"/>
                                 </constraints>
                             </view>
+                            <view hidden="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="yhM-kg-uNe">
+                                <rect key="frame" x="140" y="190" width="320" height="220"/>
+                                <subviews>
+                                    <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="cuF-V1-BO1">
+                                        <rect key="frame" x="0.0" y="0.0" width="320" height="36"/>
+                                        <subviews>
+                                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Ride Complete" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="aZV-XD-wdF">
+                                                <rect key="frame" x="104" y="8" width="113" height="21"/>
+                                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="calibratedRGB"/>
+                                                <nil key="highlightedColor"/>
+                                            </label>
+                                        </subviews>
+                                        <color key="backgroundColor" red="0.0078431372550000003" green="0.0" blue="0.50980392159999999" alpha="1" colorSpace="calibratedRGB"/>
+                                    </view>
+                                    <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="q2A-vn-rl8">
+                                        <rect key="frame" x="49" y="148" width="223" height="41"/>
+                                        <color key="backgroundColor" red="0.0078431372550000003" green="0.0" blue="0.50980392159999999" alpha="1" colorSpace="calibratedRGB"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <state key="normal" title="Done">
+                                            <color key="titleColor" red="0.95686274510000002" green="0.98039215690000003" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                        </state>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                <integer key="value" value="8"/>
+                                            </userDefinedRuntimeAttribute>
+                                        </userDefinedRuntimeAttributes>
+                                        <connections>
+                                            <action selector="completedRideAcknowledged:" destination="BYZ-38-t0r" eventType="touchUpInside" id="7w2-ug-SQz"/>
+                                        </connections>
+                                    </button>
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Thank you for riding with Buzz Rides." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lkb-hi-TbN">
+                                        <rect key="frame" x="15" y="79" width="291" height="32"/>
+                                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                        <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                        <nil key="highlightedColor"/>
+                                    </label>
+                                </subviews>
+                                <color key="backgroundColor" red="0.91652856689999995" green="0.91652856689999995" blue="0.91652856689999995" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="320" id="bSN-hR-g06"/>
+                                    <constraint firstAttribute="height" constant="220" id="l4a-aX-KdV"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" red="0.0078431372550000003" green="0.0" blue="0.50980392159999999" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
@@ -284,6 +328,7 @@
                             <constraint firstItem="ymp-65-AtV" firstAttribute="top" secondItem="h3A-Oh-yNE" secondAttribute="bottom" constant="8" symbolic="YES" id="Hhs-kk-VuG"/>
                             <constraint firstItem="RYh-fk-Lc6" firstAttribute="top" secondItem="B95-0w-KJm" secondAttribute="bottom" constant="6" id="Hiv-gh-xhb"/>
                             <constraint firstItem="7tN-FE-EKX" firstAttribute="trailing" secondItem="SOS-Hf-cdz" secondAttribute="trailing" id="KWE-Pf-Nk5"/>
+                            <constraint firstItem="yhM-kg-uNe" firstAttribute="centerY" secondItem="8bC-Xf-vdC" secondAttribute="centerY" id="OcO-h3-soa"/>
                             <constraint firstItem="PAW-Qw-C2M" firstAttribute="top" secondItem="2pa-AU-6dc" secondAttribute="bottom" id="PK8-qi-qyq"/>
                             <constraint firstItem="B95-0w-KJm" firstAttribute="baseline" secondItem="OaK-sY-xky" secondAttribute="baseline" id="Ppm-fP-4B8"/>
                             <constraint firstItem="RYh-fk-Lc6" firstAttribute="top" secondItem="PAW-Qw-C2M" secondAttribute="bottom" constant="4" id="QH6-2G-R9v"/>
@@ -314,6 +359,7 @@
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="vBW-lQ-Msb" secondAttribute="bottom" constant="25" id="q8F-X9-0g1"/>
                             <constraint firstItem="yzn-jx-oHr" firstAttribute="centerY" secondItem="9cw-iN-WL0" secondAttribute="centerY" id="rAu-5n-ZEE"/>
                             <constraint firstItem="SOS-Hf-cdz" firstAttribute="top" secondItem="vBW-lQ-Msb" secondAttribute="top" id="tqT-Qt-Ihr"/>
+                            <constraint firstItem="yhM-kg-uNe" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="vFN-fk-SyW"/>
                             <constraint firstItem="ymp-65-AtV" firstAttribute="trailing" secondItem="h3A-Oh-yNE" secondAttribute="trailing" id="wMX-Di-485"/>
                             <constraint firstItem="SOS-Hf-cdz" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" constant="436" id="yIa-6g-8uk"/>
                             <constraint firstItem="Q0H-4B-fqg" firstAttribute="leading" secondItem="ymp-65-AtV" secondAttribute="leading" id="ycZ-Ux-RH3"/>
@@ -333,6 +379,7 @@
                     <toolbarItems/>
                     <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
+                        <outlet property="completedRideView" destination="yhM-kg-uNe" id="CuL-vT-RvE"/>
                         <outlet property="driverImage" destination="ANT-pn-qdo" id="ABB-fG-1PK"/>
                         <outlet property="driverNameLabel" destination="nBT-Sg-b6E" id="7L3-Jf-AjP"/>
                         <outlet property="estimatedWaitTimeLabel" destination="E4v-Rt-qsd" id="9a7-5c-cid"/>
@@ -426,7 +473,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="9xz-dj-Kpl" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1315" y="2381"/>
+            <point key="canvasLocation" x="171" y="3071"/>
         </scene>
         <!--Driver Profile View Controller-->
         <scene sceneID="2K2-0h-nDU">
@@ -654,7 +701,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Oq2-Vm-WDM" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1315" y="3091"/>
+            <point key="canvasLocation" x="171" y="3747"/>
         </scene>
         <!--Ride Info View Controller-->
         <scene sceneID="6cP-9R-aWp">
@@ -820,7 +867,7 @@
                                 </constraints>
                                 <state key="normal" backgroundImage="messageIcon"/>
                                 <connections>
-                                    <action selector="messageDriver:" destination="eFQ-nL-8Uz" eventType="touchUpInside" id="I2J-aX-kba"/>
+                                    <action selector="messageRider:" destination="eFQ-nL-8Uz" eventType="touchUpInside" id="cyr-Hi-vmJ"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="VCa-5m-4Fi">
@@ -883,7 +930,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="SXc-xt-63h" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="2031" y="2381"/>
+            <point key="canvasLocation" x="866" y="3071"/>
         </scene>
         <!--Profile-->
         <scene sceneID="QKC-Ov-r7U">

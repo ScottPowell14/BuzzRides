@@ -188,9 +188,6 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     
     
     func endRideButtonPressed() {
-        // EDIT -- Do proper checks and backend compliance
-        
-        // might just do a segue back to the
         acceptButton.setTitle("Accept", forState: .Normal)
         acceptButton.backgroundColor = UIColor(red: 0.0/255, green: 122.0/255, blue: 255.0/255, alpha: 1)
         openInMapsButton.hidden = true
@@ -229,14 +226,22 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     
     
     @IBAction func callRider(sender: AnyObject) {
-        
+        if let phoneNumber = self.passengerPhoneNumber, let url = NSURL(string: "tel://\(phoneNumber)")  {
+            UIApplication.sharedApplication().openURL(url)
+        }
     }
     
     
-    
-    
-    @IBAction func messageDriver(sender: AnyObject) {
-        
+    @IBAction func messageRider(sender: AnyObject) {
+        if let phoneNumber = self.passengerPhoneNumber, let messageComposer = MessageComposer(phoneNumber: phoneNumber) {
+            if (messageComposer.canSendText()) {
+                let messageComposeVC = messageComposer.configuredMessageComposeViewController()
+                self.presentViewController(messageComposeVC, animated: true, completion: nil)
+            } else {
+                let alert = UIAlertController(title: "Buzz!", message: "Your device is unable to send text messages right now.", preferredStyle: UIAlertControllerStyle.Alert)
+                self.presentAlert(alert)
+            }
+        }
     }
     
     func setLabels() {
