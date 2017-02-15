@@ -11,7 +11,7 @@ import MapKit
 import Firebase
 
 protocol HandleMapSearch {
-    func dropPinZoomIn(placemark:MKPlacemark)
+    func dropPinZoomIn(_ placemark:MKPlacemark)
 }
 
 class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate, UITextFieldDelegate {
@@ -62,7 +62,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         super.viewDidLoad()
         
         self.setNeedsStatusBarAppearanceUpdate()
-        UIApplication.sharedApplication().statusBarStyle = .LightContent
+        UIApplication.shared.statusBarStyle = .lightContent
         
         locationManager.delegate = self
         startLocationTextField.delegate = self
@@ -71,13 +71,19 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         locationManager.requestWhenInUseAuthorization()
         
         // EDIT: Confirm location is accessible and granted
+        if CLLocationManager.locationServicesEnabled() {
+            centerOnUser(self)
+            placeUserAnnotation()
+        } else {
+            locationManager.requestWhenInUseAuthorization()
+        }
         
         // Keyboard dismissal gesture recognizer
         let keyboardDismissGesture = UITapGestureRecognizer(target: self, action: #selector(ViewController.userTappedMapBackground))
         self.mapView.addGestureRecognizer(keyboardDismissGesture)
         
         // UISearchController
-        let locationSearchTable = storyboard!.instantiateViewControllerWithIdentifier("LocationSearchTable") as! LocationSearchTable
+        let locationSearchTable = storyboard!.instantiateViewController(withIdentifier: "LocationSearchTable") as! LocationSearchTable
         resultSearchController = UISearchController(searchResultsController: locationSearchTable)
         resultSearchController?.searchResultsUpdater = locationSearchTable
         locationSearchTable.mapView = mapView
@@ -99,12 +105,12 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         //searchBar.becomeFirstResponder() // EDIT: this means when the view loads it goes right to the end destination search bar -- of course users can escape out of it, but then the UI will be reset properly
         
         //SearchBar Text
-        let textFieldInsideUISearchBar = searchBar.valueForKey("searchField") as? UITextField
+        let textFieldInsideUISearchBar = searchBar.value(forKey: "searchField") as? UITextField
         textFieldInsideUISearchBar?.textColor = UIColor(red: 42.0/255, green: 141.0/255, blue: 243.0/255, alpha: 1)
         textFieldInsideUISearchBar?.font = UIFont(name: "Gill Sans", size: 17)
         
         //SearchBar Placeholder
-        let textFieldInsideUISearchBarLabel = textFieldInsideUISearchBar!.valueForKey("placeholderLabel") as? UILabel
+        let textFieldInsideUISearchBarLabel = textFieldInsideUISearchBar!.value(forKey: "placeholderLabel") as? UILabel
         textFieldInsideUISearchBarLabel?.textColor = UIColor(red: 42.0/255, green: 141.0/255, blue: 243.0/255, alpha: 1)
         textFieldInsideUISearchBarLabel?.font = UIFont(name: "Gill Sans", size: 17)
         
@@ -117,37 +123,38 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         
         locationSearchTable.handleMapSearchDelegate = self
         
+        self.startLocationTextField.isEnabled = false
         self.userCurrentlyOnRide = false
     }
     
-    override func preferredStatusBarStyle() -> UIStatusBarStyle {
-        return UIStatusBarStyle.LightContent
+    override var preferredStatusBarStyle : UIStatusBarStyle {
+        return UIStatusBarStyle.lightContent
     }
     
-    @IBAction func request(sender: AnyObject) {
+    @IBAction func request(_ sender: AnyObject) {
         if (requestButton.titleLabel?.text == "Cancel") {
             self.cancelButtonPressed()
             return
         }
         
         if self.currentDestinationLocation == nil || searchBarReference?.text == "" {
-            let alert = UIAlertController(title: "Buzz!", message: "Please confirm your destination.", preferredStyle: UIAlertControllerStyle.Alert)
-            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alert, animated: true, completion: nil)
+            let alert = UIAlertController(title: "Buzz!", message: "Please confirm your destination.", preferredStyle: UIAlertControllerStyle.alert)
+            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
             return
         }
         
-        self.showProfileButton.hidden = true
-        requestButton.setTitle("Cancel", forState: .Normal)
-        requestButton.backgroundColor = UIColor.redColor()
-        self.startLocationTextField.userInteractionEnabled = false
-        self.searchBarReference?.userInteractionEnabled = false
+        self.showProfileButton.isHidden = true
+        requestButton.setTitle("Cancel", for: UIControlState())
+        requestButton.backgroundColor = UIColor.red
+        self.startLocationTextField.isUserInteractionEnabled = false
+        self.searchBarReference?.isUserInteractionEnabled = false
         
         
         // have other method to check these conditions -- EDIT: put checks in the checkifValidRide in Ride class
         // We should have checks for: the pickup and drop off location is valid, there are drivers on the road, it is within the proper time of night interval, there is no special flag enabled for no service, potentially more checks 
         
-        self.currentPickupLocationPlacemark?.location
+        // self.currentPickupLocationPlacemark?.location
         
         
         currentRide = Ride(name: self.name, phoneNumber: self.phoneNumber, email: self.emailAddress, numberPassengers: self.numberOfPassengersLabel.text, currentLoc: self.locationManager.location, pickUpLoc: self.currentPickupLocationPlacemark?.location, destinationLoc: self.currentDestinationLocation, pickUpLocString: self.startLocationTextField.text, destinationLocString: self.searchBarReference?.text, drivName: nil, driverPhoneNum: nil, driverLoc: nil, arrivalTime: nil, placeQueue: nil)
@@ -163,9 +170,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             
             // distance check (under about 5.5 miles)
             if routePickupToDestination.distance > 8800.0 {
-                let alert = UIAlertController(title: "Buzz!", message: "Sorry! We can't take you that far!", preferredStyle: UIAlertControllerStyle.Alert)
-                alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-                self.presentViewController(alert, animated: true, completion: nil)
+                let alert = UIAlertController(title: "Buzz!", message: "Sorry! We can't take you that far!", preferredStyle: UIAlertControllerStyle.alert)
+                alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+                self.present(alert, animated: true, completion: nil)
                 cancelButtonPressed()
                 return
             }
@@ -173,7 +180,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             // add ride here
             currentRide!.addRideToQueue()
             
-            self.mapView.addOverlay(routePickupToDestination.polyline)
+            self.mapView.add(routePickupToDestination.polyline)
             routeOverlay = routePickupToDestination.polyline
             let mapRegion = regionForTwoPoints(currentRide!.passengerPickUpLocation!, locationTwo: currentRide!.passengerDestination!)
             mapView.setRegion(mapRegion, animated: true)
@@ -194,7 +201,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     }
     
     func showQueueInfoView() {
-        self.queueInfoView.hidden = false
+        self.queueInfoView.isHidden = false
         
         // EDIT -- make this a var and update it every minute
         let estimatedWaitTime = ((currentRide!.queueSize! * 4) / currentRide!.numberOfDrivers!) + 1
@@ -204,8 +211,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     
     func showRideInfoView() {
-        self.queueInfoView.hidden = true
-        self.rideInfoView.hidden = false
+        self.queueInfoView.isHidden = true
+        self.rideInfoView.isHidden = false
         self.userCurrentlyOnRide = true
         
         if let eta = currentRide?.eta {
@@ -225,43 +232,43 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     func showRideCompletedView() {
         if !UIAccessibilityIsReduceTransparencyEnabled() {
-            let blurEffect = UIBlurEffect(style: .Light)
+            let blurEffect = UIBlurEffect(style: .light)
             let blurEffectView = UIVisualEffectView(effect: blurEffect)
             //always fill the view
             blurEffectView.frame = self.view.bounds
             self.view.addSubview(blurEffectView)
             self.blurView = blurEffectView
         }
-        self.completedRideView.hidden = false
-        self.view.bringSubviewToFront(self.completedRideView)
+        self.completedRideView.isHidden = false
+        self.view.bringSubview(toFront: self.completedRideView)
     }
     
     
-    @IBAction func completedRideAcknowledged(sender: AnyObject) {
+    @IBAction func completedRideAcknowledged(_ sender: AnyObject) {
         if self.blurView != nil {
             self.blurView!.removeFromSuperview()
             self.blurView = nil
         }
-        self.completedRideView.hidden = true
+        self.completedRideView.isHidden = true
     }
     
     
-    @IBAction func callDriver(sender: AnyObject) {
+    @IBAction func callDriver(_ sender: AnyObject) {
         if let curRide = currentRide {
             curRide.callDriver()
         }
     }
     
-    @IBAction func messageDriver(sender: AnyObject) {
+    @IBAction func messageDriver(_ sender: AnyObject) {
         if let curRide = currentRide {
             curRide.messageDriver()
         }
     }
     
     func cancelRideDueToNoDrivers() {
-        let alert = UIAlertController(title: "Buzz!", message: "Sorry! There are currently no active drivers, which may be because Buzz Rides is not operating right now.", preferredStyle: UIAlertControllerStyle.Alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-        self.presentViewController(alert, animated: true, completion: nil)
+        let alert = UIAlertController(title: "Buzz!", message: "Sorry! There are currently no active drivers, which may be because Buzz Rides is not operating right now.", preferredStyle: UIAlertControllerStyle.alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
         
         self.cancelButtonPressed()
     }
@@ -271,28 +278,28 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         // first need to remove the ride data from the queue
         currentRide!.removeRideToQueue()
         
-        requestButton.setTitle("Request", forState: .Normal)
+        requestButton.setTitle("Request", for: UIControlState())
         requestButton.backgroundColor = UIColor(red: 2.0/255, green: 0.0/255, blue: 130.0/255, alpha: 1)
-        self.rideInfoView.hidden = true
-        self.queueInfoView.hidden = true
-        self.showProfileButton.hidden = false
-        self.startLocationTextField.userInteractionEnabled = true
-        self.searchBarReference?.userInteractionEnabled = true
+        self.rideInfoView.isHidden = true
+        self.queueInfoView.isHidden = true
+        self.showProfileButton.isHidden = false
+        self.startLocationTextField.isUserInteractionEnabled = true
+        self.searchBarReference?.isUserInteractionEnabled = true
         self.userCurrentlyOnRide = false
         
         if let overlay = routeOverlay {
-            mapView.removeOverlay(overlay)
+            mapView.remove(overlay)
         }
         self.centerOnLocation()
     }
     
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
     
-    @IBAction func userTappedBackground(sender: AnyObject) {
+    @IBAction func userTappedBackground(_ sender: AnyObject) {
         view.endEditing(true)
     }
     
@@ -301,7 +308,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     }
     
     
-    func regionForTwoPoints(let locationOne : CLLocation, let locationTwo : CLLocation) -> MKCoordinateRegion {
+    func regionForTwoPoints(_ locationOne : CLLocation, locationTwo : CLLocation) -> MKCoordinateRegion {
         var center = CLLocationCoordinate2D()
         
         let lon1 = locationOne.coordinate.longitude * M_PI / 180
@@ -326,8 +333,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     
     
-    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
-        if status == .AuthorizedWhenInUse {
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        if status == .authorizedWhenInUse {
             print("We have authorization")
             mapView.showsUserLocation = true
             mapView.userLocation.title = nil
@@ -339,7 +346,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         }
     }
     
-    @IBAction func centerOnUser(sender: AnyObject) {
+    @IBAction func centerOnUser(_ sender: AnyObject) {
         centerOnLocation()
         
         
@@ -348,31 +355,24 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             let geoCoder = CLGeocoder()
             var addressString : String?
             
-            geoCoder.reverseGeocodeLocation(currentLocation, completionHandler: { (let placemarks : [CLPlacemark]?, let error : NSError?) -> Void in
+            
+            geoCoder.reverseGeocodeLocation(currentLocation, completionHandler: { (placemarks, error) in
                 if error != nil {
                     print("Error getting user location")
                     return
-                }
-                
-                // placemarks might contain multiple results, but just using the first one for simplicity
-                if let places = placemarks {
+                } else {
+                    guard let places = placemarks else { return }
+                    
                     let userLocPlacemark = places[0]
                     self.currentPickupLocationPlacemark = userLocPlacemark
                     
-                    // instantiate MKPlacemark with CLPlacemark data
-                    let mkPlacemark = MKPlacemark(placemark: userLocPlacemark)
+                    addressString = self.parseAddress(MKPlacemark(placemark: userLocPlacemark))
                     
-                    addressString = self.parseAddress(mkPlacemark)
-                }
-                
-                if let address = addressString {
-                    print(address)
+                    guard let address = addressString else {return}
+                    
                     self.startLocationTextField.text = address
                 }
-                
-                })
-        } else {
-            // might not have location yet...
+            })
         }
     }
     
@@ -384,7 +384,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             placeUserAnnotation()
         } else {
             print("Current location unknown")
-            // locationManager.requestWhenInUseAuthorization
+            locationManager.requestWhenInUseAuthorization()
         }
     }
     
@@ -396,7 +396,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             let userAnnotation = UserAnnotation(coord: coord, tit: "Pickup Location")
             userAnnotation.accessibilityLabel = "Start"
             
-            mapView.viewForAnnotation(userAnnotation)
+            mapView.view(for: userAnnotation)
             mapView.addAnnotation(userAnnotation)
             currentAnnotations.append(userAnnotation)
         } else {
@@ -405,21 +405,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         }
     }
     
-    func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
-        if annotation.isKindOfClass(MKUserLocation) {
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        if annotation.isKind(of: MKUserLocation.self) {
             return nil
         }
         
-        var userAnnotationViewBase = mapView.dequeueReusableAnnotationViewWithIdentifier("pin")
+        var userAnnotationViewBase = mapView.dequeueReusableAnnotationView(withIdentifier: "pin")
         
         if userAnnotationViewBase == nil {
             let userAnnotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "pin") // new annotation view
-            if annotation.isMemberOfClass(UserAnnotation) {
-                userAnnotationView.draggable = true
+            if annotation.isMember(of: UserAnnotation.self) {
+                userAnnotationView.isDraggable = true
                 userAnnotationView.canShowCallout = false
-                userAnnotationView.pinTintColor = UIColor.greenColor()
+                userAnnotationView.pinTintColor = UIColor.green
             } else {
-                userAnnotationView.draggable = false
+                userAnnotationView.isDraggable = false
                 userAnnotationView.canShowCallout = true
             }
             userAnnotationViewBase = userAnnotationView
@@ -430,8 +430,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         return userAnnotationViewBase
     }
     
-    func mapView(mapView: MKMapView, annotationView view: MKAnnotationView, didChangeDragState newState: MKAnnotationViewDragState, fromOldState oldState: MKAnnotationViewDragState) {
-        if newState == .Ending {
+    func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, didChange newState: MKAnnotationViewDragState, fromOldState oldState: MKAnnotationViewDragState) {
+        if newState == .ending {
             if let newCoord = view.annotation?.coordinate {
                 let droppedCoord : CLLocationCoordinate2D = newCoord
                 updateStartLocationWithPinLocation(droppedCoord)
@@ -439,14 +439,14 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         }
     }
     
-    func updateStartLocationWithPinLocation(let newCoord : CLLocationCoordinate2D) {
+    func updateStartLocationWithPinLocation(_ newCoord : CLLocationCoordinate2D) {
         
-        let locationOfCoord = CLLocation(coordinate: newCoord, altitude: 0, horizontalAccuracy: 0, verticalAccuracy: 0, course: 0, speed: 0, timestamp: NSDate())
+        let locationOfCoord = CLLocation(coordinate: newCoord, altitude: 0, horizontalAccuracy: 0, verticalAccuracy: 0, course: 0, speed: 0, timestamp: Date())
         
         let geoCoder = CLGeocoder()
         var addressString : String?
             
-        geoCoder.reverseGeocodeLocation(locationOfCoord, completionHandler: { (let placemarks : [CLPlacemark]?, let error : NSError?) -> Void in
+        geoCoder.reverseGeocodeLocation(locationOfCoord, completionHandler: { (placemarks, error) -> Void in
             if error != nil {
                 print("Error getting placemark location") // user may have placed the placemark in an illegitimate location... must do checks to make sure it is a valid location and within a reasonable distance to the user as well.
                 return
@@ -471,7 +471,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     }
     
     
-    @IBAction func incrementNumberOfPassengers(sender: AnyObject) {
+    @IBAction func incrementNumberOfPassengers(_ sender: AnyObject) {
         var numberOfPassengers : Int = 1
         if let currentLabelText = numberOfPassengersLabel.text {
             numberOfPassengers = Int(currentLabelText)!
@@ -479,9 +479,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         
         numberOfPassengers += 1
         if numberOfPassengers > 5 {
-            let alert = UIAlertController(title: "Buzz!", message: "We can only fit 5 passengers. Someone's walking!", preferredStyle: UIAlertControllerStyle.Alert)
-            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alert, animated: true, completion: nil)
+            let alert = UIAlertController(title: "Buzz!", message: "We can only fit 5 passengers. Someone's walking!", preferredStyle: UIAlertControllerStyle.alert)
+            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
             
             numberOfPassengers -= 1
         }
@@ -489,7 +489,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     }
     
     
-    @IBAction func decrementNumberOfPassengers(sender: AnyObject) {
+    @IBAction func decrementNumberOfPassengers(_ sender: AnyObject) {
         var numberOfPassengers : Int = 1
         if let currentLabelText = numberOfPassengersLabel.text {
             numberOfPassengers = Int(currentLabelText)!
@@ -502,7 +502,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         numberOfPassengersLabel.text = String(numberOfPassengers)
     }
     
-    func mapView(mapView: MKMapView, rendererForOverlay overlay: MKOverlay) -> MKOverlayRenderer {
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         
         let myLineRenderer = MKPolylineRenderer(polyline: self.currentRide!.userRoute!.polyline)
         myLineRenderer.strokeColor = UIColor(red: 0.0/255, green: 122.0/255, blue: 255.0/255, alpha: 1)
@@ -512,19 +512,19 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     
     // Alert View
-    func presentAlert(alert : UIAlertController?) {
+    func presentAlert(_ alert : UIAlertController?) {
         if let alertError = alert {
-            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alertError, animated: true, completion: nil)
+            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alertError, animated: true, completion: nil)
         }
     }
     
     
     // MARK: - Navigation
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "requestToProfile" {
-            let destinationViewController = segue.destinationViewController as! ProfileViewController
+            let destinationViewController = segue.destination as! ProfileViewController
             destinationViewController.name = self.name
             destinationViewController.phoneNumber = self.phoneNumber
             destinationViewController.emailAddress = self.emailAddress
@@ -541,7 +541,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
 }
 
 extension ViewController : HandleMapSearch {
-    func dropPinZoomIn(placemark: MKPlacemark) {
+    func dropPinZoomIn(_ placemark: MKPlacemark) {
         // cache the pin
         selectedPin = placemark
         // clear exiting pins
@@ -571,7 +571,7 @@ extension ViewController : HandleMapSearch {
         mapView.setRegion(region, animated: true)
     }
     
-    func parseAddress(selectedItem : MKPlacemark) -> String {
+    func parseAddress(_ selectedItem : MKPlacemark) -> String {
         // put a space between "4" and "Melrose Place"
         let firstSpace = (selectedItem.subThoroughfare != nil && selectedItem.thoroughfare != nil) ? " " : ""
         // put a comma between street and city/state

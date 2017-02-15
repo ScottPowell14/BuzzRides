@@ -8,6 +8,17 @@
 
 import UIKit
 import Firebase
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
 
 class SignUpViewController: UIViewController, UITextFieldDelegate {
     
@@ -26,7 +37,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         super.viewDidLoad()
         
         self.setNeedsStatusBarAppearanceUpdate()
-        UIApplication.sharedApplication().statusBarStyle = .LightContent
+        UIApplication.shared.statusBarStyle = .lightContent
         
         nameTextField.delegate = self
         phoneNumberTextField.delegate = self
@@ -43,7 +54,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         
     }
 
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
@@ -52,19 +63,19 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         view.endEditing(true)
     }
     
-    override func preferredStatusBarStyle() -> UIStatusBarStyle {
-        return UIStatusBarStyle.LightContent
+    override var preferredStatusBarStyle : UIStatusBarStyle {
+        return UIStatusBarStyle.lightContent
     }
     
     // MARK: - Sign up and Authentication
     
-    @IBAction func signUp(sender: AnyObject) {
+    @IBAction func signUp(_ sender: AnyObject) {
         // 1. Check to validate the text fields and that they contain the proper information and are formatted correctly. If not, then send alert and end method.
         var domain : String = ""
         
         if let email = emailTextField.text {
             if email.characters.count > 8 {
-                domain = email.substringFromIndex(email.endIndex.advancedBy(-8))
+                domain = email.substring(from: email.characters.index(email.endIndex, offsetBy: -8))
             }
         }
         
@@ -76,22 +87,22 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
         if nameTextField.text == "" || phoneNumberTextField.text == "" || emailTextField.text == "" || passwordTextField.text == "" {
             // Alert for "Please fill in every field."
             print("Empty fields")
-            alert = UIAlertController(title: "Buzz!", message: "Please completely enter your information.", preferredStyle: UIAlertControllerStyle.Alert)
+            alert = UIAlertController(title: "Buzz!", message: "Please completely enter your information.", preferredStyle: UIAlertControllerStyle.alert)
             self.presentAlert(alert)
         } else if domain != "@unc.edu" && domain != "duke.edu" {
             // Alert for "Please enter a valid duke.edu or unc.edu email address"
             print("Invalid email")
-            alert = UIAlertController(title: "Buzz!", message: "Please enter a valid Duke or UNC email.", preferredStyle: UIAlertControllerStyle.Alert)
+            alert = UIAlertController(title: "Buzz!", message: "Please enter a valid Duke or UNC email.", preferredStyle: UIAlertControllerStyle.alert)
             self.presentAlert(alert)
         } else if phoneNumberTextField.text?.characters.count < 10 {
             // Alert for "Enter a valid phone number"
             print("Invalid number")
-            alert = UIAlertController(title: "Buzz!", message: "Please enter a valid phone number.", preferredStyle: UIAlertControllerStyle.Alert)
+            alert = UIAlertController(title: "Buzz!", message: "Please enter a valid phone number.", preferredStyle: UIAlertControllerStyle.alert)
             self.presentAlert(alert)
         } else {
             print("Valid information")
             // Register a user here -- may want to use something off the main thread if this takes too long
-            FIRAuth.auth()?.createUserWithEmail(emailTextField.text!, password: passwordTextField.text!) { (user, error) in
+            FIRAuth.auth()?.createUser(withEmail: emailTextField.text!, password: passwordTextField.text!) { (user, error) in
                 // user is a reference to the newly created user, while error is any error that may have occured
                 if error != nil {
                     // Read up on FIRAuthErrors and handle each accordingly:
@@ -114,7 +125,7 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
                     // Maybe this will do the trick, we'll see during testing
                     
                     if let errorMessage = error?.localizedDescription {
-                        alert = UIAlertController(title: "Buzz!", message: "\(errorMessage)", preferredStyle: UIAlertControllerStyle.Alert)
+                        alert = UIAlertController(title: "Buzz!", message: "\(errorMessage)", preferredStyle: UIAlertControllerStyle.alert)
                         self.presentAlert(alert)
                         print("An error occured: \(error)")
                     }
@@ -122,16 +133,16 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
                 }
                 
                 // cache / save the user information locally
-                NSUserDefaults.standardUserDefaults().setValue(self.nameTextField.text, forKey: "name")
-                NSUserDefaults.standardUserDefaults().setValue(self.emailTextField.text, forKey: "email")
-                NSUserDefaults.standardUserDefaults().setValue(self.phoneNumberTextField.text, forKey: "phoneNumber")
-                NSUserDefaults.standardUserDefaults().setBool(true, forKey: "hasLoginKey")
-                NSUserDefaults.standardUserDefaults().synchronize()
+                UserDefaults.standard.setValue(self.nameTextField.text, forKey: "name")
+                UserDefaults.standard.setValue(self.emailTextField.text, forKey: "email")
+                UserDefaults.standard.setValue(self.phoneNumberTextField.text, forKey: "phoneNumber")
+                UserDefaults.standard.set(true, forKey: "hasLoginKey")
+                UserDefaults.standard.synchronize()
                 
                 // set the display name (way to hold information about current user) to be the name and phone number, comma separated
                 let changeRequest = user?.profileChangeRequest()
                 changeRequest?.displayName = "\(self.nameTextField.text!),\(self.phoneNumberTextField.text!)"
-                changeRequest?.commitChangesWithCompletion() { (error) in
+                changeRequest?.commitChanges() { (error) in
                     if let error = error {
                         print(error.localizedDescription)
                         return
@@ -143,15 +154,15 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
                 
                 
                 // perform segue here to the request view
-                self.performSegueWithIdentifier("signUpToRequestView", sender: self)
+                self.performSegue(withIdentifier: "signUpToRequestView", sender: self)
             }
         }
     }
     
-    func presentAlert(alert : UIAlertController?) {
+    func presentAlert(_ alert : UIAlertController?) {
         if let alertError = alert {
-            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alertError, animated: true, completion: nil)
+            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alertError, animated: true, completion: nil)
         }
     }
     
@@ -166,11 +177,11 @@ class SignUpViewController: UIViewController, UITextFieldDelegate {
     
     // MARK: - Navigation
 
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let segID = segue.identifier
         
         if segID == "signUpToRequestView" {
-            let destinationViewController = segue.destinationViewController as! ViewController
+            let destinationViewController = segue.destination as! ViewController
             
             destinationViewController.name = nameTextField.text
             destinationViewController.phoneNumber = phoneNumberTextField.text

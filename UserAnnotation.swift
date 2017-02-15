@@ -13,7 +13,7 @@ class UserAnnotation: NSObject, MKAnnotation {
     var coordinate : CLLocationCoordinate2D
     var title : String?
    
-    init(let coord : CLLocationCoordinate2D, let tit : String) {
+    init(coord : CLLocationCoordinate2D, tit : String) {
         self.coordinate = coord
         self.title = tit
     }

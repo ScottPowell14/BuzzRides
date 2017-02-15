@@ -20,7 +20,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
     
     // Database references
     var ref : FIRDatabaseReference!
-    private var _refHandle : FIRDatabaseHandle!
+    fileprivate var _refHandle : FIRDatabaseHandle!
     var contractedDrivers : [FIRDataSnapshot]! = [] // list of the contracted drivers
     
     
@@ -28,18 +28,18 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         super.viewDidLoad()
         
         self.setNeedsStatusBarAppearanceUpdate()
-        UIApplication.sharedApplication().statusBarStyle = .LightContent
+        UIApplication.shared.statusBarStyle = .lightContent
         
         // check if user's login info is saved for auto login
-        if NSUserDefaults.standardUserDefaults().boolForKey("hasLoginKey") {
+        if UserDefaults.standard.bool(forKey: "hasLoginKey") {
             // authenticate user method -- nah just do it separately
-            let emailUserName = NSUserDefaults.standardUserDefaults().objectForKey("email") as! String
-            let password = MyKeychainWrapper.myObjectForKey("v_Data") as! String
+            let emailUserName = UserDefaults.standard.object(forKey: "email") as! String
+            let password = MyKeychainWrapper.myObject(forKey: "v_Data") as! String
             
             self.emailTextField.text = emailUserName
             self.passwordTextField.text = password
             
-            FIRAuth.auth()?.signInWithEmail(emailUserName, password: password) { (user, error) in
+            FIRAuth.auth()?.signIn(withEmail: emailUserName, password: password) { (user, error) in
                 if error != nil {
                     // handle errors accordingly -- might have to have a switch statement to test all of them
                     if let errorMessage = error?.localizedDescription {
@@ -60,7 +60,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         self.view.addGestureRecognizer(keyboardDismissGesture)
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
@@ -69,22 +69,22 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         view.endEditing(true)
     }
     
-    override func preferredStatusBarStyle() -> UIStatusBarStyle {
-        return UIStatusBarStyle.LightContent
+    override var preferredStatusBarStyle : UIStatusBarStyle {
+        return UIStatusBarStyle.lightContent
     }
     
     // MARK: Check if driver for login
     
-    func checkDriverStatus(userName : String) {
+    func checkDriverStatus(_ userName : String) {
         // get the substring before "@"
-        let splitIndex = userName.characters.indexOf("@")
-        let user = userName.substringToIndex(splitIndex!)
+        let splitIndex = userName.characters.index(of: "@")
+        let user = userName.substring(to: splitIndex!)
         
         
         ref = FIRDatabase.database().reference()
         let driverListRef = ref.child("contractedDrivers")
         
-        _refHandle = driverListRef.observeEventType(.Value, withBlock: { (snapshot) -> Void in
+        _refHandle = driverListRef.observe(.value, with: { (snapshot) -> Void in
             
             for driverData in snapshot.children {
                 let driverDataSnapshot = driverData as! FIRDataSnapshot
@@ -98,32 +98,32 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         })
     }
     
-    func segueBasedOnDriverStatus(isDriver : Bool) {
+    func segueBasedOnDriverStatus(_ isDriver : Bool) {
         if (isDriver) {
-            self.performSegueWithIdentifier("loginToQueue", sender: self)
+            self.performSegue(withIdentifier: "loginToQueue", sender: self)
         } else {
-            self.performSegueWithIdentifier("loginToRequestView", sender: self)
+            self.performSegue(withIdentifier: "loginToRequestView", sender: self)
         }
     }
     
     
     // MARK: - Login
     
-    @IBAction func login(sender: AnyObject) {
+    @IBAction func login(_ sender: AnyObject) {
         var alert : UIAlertController?
         
         if emailTextField.text == "" || passwordTextField.text == "" {
             // Alert for "Please fill in every field."
             print("Empty fields")
-            alert = UIAlertController(title: "Buzz!", message: "Please enter your login information.", preferredStyle: UIAlertControllerStyle.Alert)
+            alert = UIAlertController(title: "Buzz!", message: "Please enter your login information.", preferredStyle: UIAlertControllerStyle.alert)
             self.presentAlert(alert)
         } else {
             // Authenticate user
-            FIRAuth.auth()?.signInWithEmail(emailTextField.text!, password: passwordTextField.text!) { (user, error) in
+            FIRAuth.auth()?.signIn(withEmail: emailTextField.text!, password: passwordTextField.text!) { (user, error) in
                 if error != nil {
                     // handle errors accordingly -- might have to have a switch statement to test all of them -- EDIT
                     if let errorMessage = error?.localizedDescription {
-                        alert = UIAlertController(title: "Buzz!", message: "\(errorMessage)", preferredStyle: UIAlertControllerStyle.Alert)
+                        alert = UIAlertController(title: "Buzz!", message: "\(errorMessage)", preferredStyle: UIAlertControllerStyle.alert)
                         self.presentAlert(alert)
                         print("An error occured: \(error)")
                     }
@@ -133,28 +133,28 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
                 // if we get the name and phone number here from the Firebase DB then we can just save those to NSUserDefaults right here
                 
                 if let nameAndNumber = user?.displayName {
-                    let index = nameAndNumber.characters.indexOf(",")
-                    let name = nameAndNumber.substringToIndex(index!)
-                    var number = nameAndNumber.substringFromIndex(index!)
-                    number.removeAtIndex(number.startIndex)
+                    let index = nameAndNumber.characters.index(of: ",")
+                    let name = nameAndNumber.substring(to: index!)
+                    var number = nameAndNumber.substring(from: index!)
+                    number.remove(at: number.startIndex)
                     
                     self.saveUserInformation(name, userNumber: number)
                     
                 } else {
                     // if for some reason they do not have a display name, then have the user confirm their information
-                    let infoAlert = UIAlertController(title: "Confirm Information", message: "Please confirm your name and phone number.", preferredStyle: .Alert)
+                    let infoAlert = UIAlertController(title: "Confirm Information", message: "Please confirm your name and phone number.", preferredStyle: .alert)
                 
-                    infoAlert.addTextFieldWithConfigurationHandler({ (nameTextField) -> Void in
+                    infoAlert.addTextField(configurationHandler: { (nameTextField) -> Void in
                         nameTextField.text = ""
                         nameTextField.placeholder = "Name"
                     })
                 
-                    infoAlert.addTextFieldWithConfigurationHandler({ (numberTextField) -> Void in
+                    infoAlert.addTextField(configurationHandler: { (numberTextField) -> Void in
                         numberTextField.text = ""
                         numberTextField.placeholder = "Phone number"
                     })
                 
-                    infoAlert.addAction(UIAlertAction(title: "OK", style: .Default, handler: { (action) -> Void in
+                    infoAlert.addAction(UIAlertAction(title: "OK", style: .default, handler: { (action) -> Void in
                         var name = ""
                         var number = ""
                     
@@ -169,25 +169,25 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
                         }
                     
                         if name == "" || number == "" {
-                            alert = UIAlertController(title: "Buzz!", message: "Please login again and confirm your name and number.", preferredStyle: UIAlertControllerStyle.Alert)
+                            alert = UIAlertController(title: "Buzz!", message: "Please login again and confirm your name and number.", preferredStyle: UIAlertControllerStyle.alert)
                             self.presentAlert(alert)
                         } else {
                             self.saveUserInformation(name, userNumber: number)
                         }
                     }))
                 
-                    self.presentViewController(infoAlert, animated: true, completion: nil)
+                    self.present(infoAlert, animated: true, completion: nil)
                 }
             }
         }
     }
     
-    func saveUserInformation(userName : String, userNumber : String) {
-        NSUserDefaults.standardUserDefaults().setValue(self.emailTextField.text, forKey: "email")
-        NSUserDefaults.standardUserDefaults().setValue(userName, forKey: "name")
-        NSUserDefaults.standardUserDefaults().setValue(userNumber, forKey: "phoneNumber")
-        NSUserDefaults.standardUserDefaults().setBool(true, forKey: "hasLoginKey")
-        NSUserDefaults.standardUserDefaults().synchronize()
+    func saveUserInformation(_ userName : String, userNumber : String) {
+        UserDefaults.standard.setValue(self.emailTextField.text, forKey: "email")
+        UserDefaults.standard.setValue(userName, forKey: "name")
+        UserDefaults.standard.setValue(userNumber, forKey: "phoneNumber")
+        UserDefaults.standard.set(true, forKey: "hasLoginKey")
+        UserDefaults.standard.synchronize()
         
         self.MyKeychainWrapper.mySetObject(self.passwordTextField.text, forKey: kSecValueData)
         self.MyKeychainWrapper.writeToKeychain()
@@ -196,10 +196,10 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
     }
     
     
-    func presentAlert(alert : UIAlertController?) {
+    func presentAlert(_ alert : UIAlertController?) {
         if let alertError = alert {
-            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alertError, animated: true, completion: nil)
+            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alertError, animated: true, completion: nil)
         }
     }
     
@@ -213,18 +213,18 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
     
     // MARK: - Navigation
 
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let segID = segue.identifier
         
         if segID == "signUpSegue" {
-            let destinationViewController = segue.destinationViewController as! SignUpViewController
+            let destinationViewController = segue.destination as! SignUpViewController
             if let currentEmailString = emailTextField.text {
                 destinationViewController.emailStringFromLogin = currentEmailString
             }
         }
         
         if segID == "loginToRequestView" {
-            let destinationViewController = segue.destinationViewController as! ViewController
+            let destinationViewController = segue.destination as! ViewController
             
             var userName = ""
             var phoneNumber = ""
@@ -235,10 +235,10 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
             }
             
             
-            if (NSUserDefaults.standardUserDefaults().boolForKey("hasLoginKey")) {
-                userName = NSUserDefaults.standardUserDefaults().objectForKey("name") as! String
-                phoneNumber = NSUserDefaults.standardUserDefaults().objectForKey("phoneNumber") as! String
-                emailAddress = NSUserDefaults.standardUserDefaults().objectForKey("email") as! String
+            if (UserDefaults.standard.bool(forKey: "hasLoginKey")) {
+                userName = UserDefaults.standard.object(forKey: "name") as! String
+                phoneNumber = UserDefaults.standard.object(forKey: "phoneNumber") as! String
+                emailAddress = UserDefaults.standard.object(forKey: "email") as! String
             } else {
                 // there is no saved user defaults login information
                 // The name and phone number are saved from the DB into the defaults during login
@@ -250,7 +250,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
         }
         
         if segID == "loginToQueue" {
-            let destinationViewController = segue.destinationViewController as! DriverQueueViewController
+            let destinationViewController = segue.destination as! DriverQueueViewController
             
             var driverName = ""
             var phoneNumber = ""
@@ -260,10 +260,10 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
                 emailAddress = emailText
             }
             
-            if (NSUserDefaults.standardUserDefaults().boolForKey("hasLoginKey")) {
-                driverName = NSUserDefaults.standardUserDefaults().objectForKey("name") as! String
-                phoneNumber = NSUserDefaults.standardUserDefaults().objectForKey("phoneNumber") as! String
-                emailAddress = NSUserDefaults.standardUserDefaults().objectForKey("email") as! String
+            if (UserDefaults.standard.bool(forKey: "hasLoginKey")) {
+                driverName = UserDefaults.standard.object(forKey: "name") as! String
+                phoneNumber = UserDefaults.standard.object(forKey: "phoneNumber") as! String
+                emailAddress = UserDefaults.standard.object(forKey: "email") as! String
             } else {
                 // there is no saved user defaults login information
                 // The name and phone number are saved from the DB into the defaults during login

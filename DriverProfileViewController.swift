@@ -36,7 +36,7 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
     var refToDatabase : FIRDatabaseReference!
     var refToDriverData : FIRDatabaseReference!
     var storageRef : FIRStorageReference?
-    private var _refHandle : FIRDatabaseHandle!
+    fileprivate var _refHandle : FIRDatabaseHandle!
     
     // Driver Location
     let locationManager = CLLocationManager()
@@ -45,12 +45,12 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
         super.viewDidLoad()
         
         let storage = FIRStorage.storage()
-        storageRef = storage.referenceForURL("gs://bamboo-d0a7d.appspot.com")
+        storageRef = storage.reference(forURL: "gs://bamboo-d0a7d.appspot.com")
 
         // status bar configuration
         self.setNeedsStatusBarAppearanceUpdate()
-        UIApplication.sharedApplication().statusBarStyle = .LightContent // if you want to change this back, implement it to set to the default style in the viewDidDisappear method
-        let statusBarFrame = UIApplication.sharedApplication().statusBarFrame
+        UIApplication.shared.statusBarStyle = .lightContent // if you want to change this back, implement it to set to the default style in the viewDidDisappear method
+        let statusBarFrame = UIApplication.shared.statusBarFrame
         let view = UIView(frame: statusBarFrame)
         view.backgroundColor = UIColor(red: 244/255, green: 250/255, blue: 255/255, alpha: 1.0)
         self.view.addSubview(view)
@@ -67,19 +67,19 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
         
         if (isDriverActive!) {
             driverStatusLabel.text = "Active"
-            driverStatusLabel.textColor = UIColor.greenColor()
-            self.activeDriverSwitch.on = true
+            driverStatusLabel.textColor = UIColor.green
+            self.activeDriverSwitch.isOn = true
             self.refToDriverData = FIRDatabase.database().reference().child("drivers").child("\(self.driverName!)")
         } else {
             driverStatusLabel.text = "Not Active"
-            driverStatusLabel.textColor = UIColor.redColor()
-            self.activeDriverSwitch.on = false
+            driverStatusLabel.textColor = UIColor.red
+            self.activeDriverSwitch.isOn = false
         }
         
         // Set driver photo is it has been saved
         
-        if let imageData = NSUserDefaults.standardUserDefaults().objectForKey("driverPhoto"),
-            let image = UIImage(data: imageData as! NSData) {
+        if let imageData = UserDefaults.standard.object(forKey: "driverPhoto"),
+            let image = UIImage(data: imageData as! Data) {
             driverPhoto.image = image
         } else {
             print("No saved photo")
@@ -103,11 +103,11 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
         locationManager.requestWhenInUseAuthorization()
     }
     
-    override func preferredStatusBarStyle() -> UIStatusBarStyle {
-        return UIStatusBarStyle.Default
+    override var preferredStatusBarStyle : UIStatusBarStyle {
+        return UIStatusBarStyle.default
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
@@ -117,21 +117,21 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
     }
     
     
-    @IBAction func changePhotoButtonTouchDown(sender: AnyObject) {
-        self.changePhotoButton.backgroundColor = UIColor.blueColor()
+    @IBAction func changePhotoButtonTouchDown(_ sender: AnyObject) {
+        self.changePhotoButton.backgroundColor = UIColor.blue
     }
     
     
-    @IBAction func changePhoto(sender: AnyObject) {
+    @IBAction func changePhoto(_ sender: AnyObject) {
         self.changePhotoButton.backgroundColor = UIColor(red: 244/255, green: 250/255, blue: 255/255, alpha: 1.0)
         
         imagePicker.allowsEditing = false
-        imagePicker.sourceType = .PhotoLibrary
+        imagePicker.sourceType = .photoLibrary
         
-        self.presentViewController(imagePicker, animated: true, completion: nil)
+        self.present(imagePicker, animated: true, completion: nil)
     }
     
-    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         if let pickedImage = info[UIImagePickerControllerOriginalImage] as? UIImage {
             
             // upload to firebase storage
@@ -140,21 +140,21 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
             let storagePath = "\(driverName!).jpeg"
             let photoReference = storageRef?.child("DriversPhotos/\(storagePath)")
             
-            let uploadTask = photoReference?.putData(photoData!, metadata: nil, completion: { ( metadata, error) in
+            let uploadTask = photoReference?.put(photoData!, metadata: nil, completion: { ( metadata, error) in
                 if error != nil {
                     print(error?.localizedDescription)
                 }
             })
             
-            uploadTask!.observeStatus(.Success) { snapshot in
-                let alert = UIAlertController(title: "Buzz!", message: "Photo upload success.", preferredStyle: UIAlertControllerStyle.Alert)
+            uploadTask!.observe(.success) { snapshot in
+                let alert = UIAlertController(title: "Buzz!", message: "Photo upload success.", preferredStyle: UIAlertControllerStyle.alert)
                 self.presentAlert(alert)
                 self.driverPhoto.image = pickedImage
                 self.driverPhotoURL = storagePath
                 
                 // persist photo locally
-                NSUserDefaults.standardUserDefaults().setObject(photoData, forKey: "driverPhoto")
-                NSUserDefaults.standardUserDefaults().synchronize()
+                UserDefaults.standard.set(photoData, forKey: "driverPhoto")
+                UserDefaults.standard.synchronize()
                 
 //                let documentsURL = NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0]
 //                let imageURL = documentsURL.URLByAppendingPathComponent(storagePath)
@@ -169,10 +169,10 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
 //                }
             }
             
-            uploadTask!.observeStatus(.Failure) { snapshot in
+            uploadTask!.observe(.failure) { snapshot in
                 guard let storageError = snapshot.error else { return }
                 
-                let alert = UIAlertController(title: "Buzz!", message: "Photo upload failure.", preferredStyle: UIAlertControllerStyle.Alert)
+                let alert = UIAlertController(title: "Buzz!", message: "Photo upload failure.", preferredStyle: UIAlertControllerStyle.alert)
                 self.presentAlert(alert)
             }
             
@@ -180,27 +180,27 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
         
         
         
-        dismissViewControllerAnimated(true, completion: nil)
+        dismiss(animated: true, completion: nil)
     }
     
-    func presentAlert(alert : UIAlertController?) {
+    func presentAlert(_ alert : UIAlertController?) {
         if let alertError = alert {
-            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alertError, animated: true, completion: nil)
+            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alertError, animated: true, completion: nil)
         }
     }
     
     
     
-    func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        dismissViewControllerAnimated(true, completion: nil)
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true, completion: nil)
     }
 
-    @IBAction func updatePhoneNumber(sender: AnyObject) {
+    @IBAction func updatePhoneNumber(_ sender: AnyObject) {
         if self.phoneNumberTextField.text == "" {
-            let alert = UIAlertController(title: "Buzz!", message: "Please enter your name and phone number.", preferredStyle: UIAlertControllerStyle.Alert)
-            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alert, animated: true, completion: nil)
+            let alert = UIAlertController(title: "Buzz!", message: "Please enter your name and phone number.", preferredStyle: UIAlertControllerStyle.alert)
+            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
             return
         }
         
@@ -208,44 +208,44 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
         self.driverPhoneNumber = self.phoneNumberTextField.text
         
         // update user defaults
-        NSUserDefaults.standardUserDefaults().setValue(self.driverPhoneNumber, forKey: "phoneNumber")
-        NSUserDefaults.standardUserDefaults().synchronize()
+        UserDefaults.standard.setValue(self.driverPhoneNumber, forKey: "phoneNumber")
+        UserDefaults.standard.synchronize()
         
         // update firebase database
         let user = FIRAuth.auth()?.currentUser
         let changeRequest = user?.profileChangeRequest()
         
         changeRequest?.displayName = "\(self.driverName!),\(self.driverPhoneNumber!)"
-        changeRequest?.commitChangesWithCompletion() { (error) in
+        changeRequest?.commitChanges() { (error) in
             if let error = error {
                 print(error.localizedDescription)
                 return
             }
         }
         
-        let alert = UIAlertController(title: "Buzz!", message: "Your information has been updated.", preferredStyle: UIAlertControllerStyle.Alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-        self.presentViewController(alert, animated: true, completion: nil)
+        let alert = UIAlertController(title: "Buzz!", message: "Your information has been updated.", preferredStyle: UIAlertControllerStyle.alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
     }
     
     
-    @IBAction func driverStatusSwitched(sender: AnyObject) {
-        if activeDriverSwitch.on {
+    @IBAction func driverStatusSwitched(_ sender: AnyObject) {
+        if activeDriverSwitch.isOn {
             driverStatusLabel.text = "Active"
-            driverStatusLabel.textColor = UIColor.greenColor()
+            driverStatusLabel.textColor = UIColor.green
             self.isDriverActive = true
             self.isDriverOnRide = "false"
             self.getDriversCurrentAddress()
         } else {
             driverStatusLabel.text = "Not Active"
-            driverStatusLabel.textColor = UIColor.redColor()
+            driverStatusLabel.textColor = UIColor.red
             self.removeInactiveDriverFromDatabase(false)
             self.isDriverActive = false
         }
     }
     
     
-    func addActiveDriverToDatabase(driverLocationAddress : String) {
+    func addActiveDriverToDatabase(_ driverLocationAddress : String) {
         self.refToDatabase = FIRDatabase.database().reference()
         
         self.driverCurrentLocationAddress = driverLocationAddress
@@ -263,7 +263,7 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
         // update the numberOfDrivers section of the database
         let numberOfDriversRef = self.refToDatabase.child("rideInfo").child("numberOfDrivers")
         
-        numberOfDriversRef.observeSingleEventOfType(.Value, withBlock: { (snapshot) -> Void in
+        numberOfDriversRef.observeSingleEvent(of: .value, with: { (snapshot) -> Void in
             if snapshot.key == "numberOfDrivers" {
                 var numberOfDrivers = snapshot.value as! Int
                 numberOfDrivers += 1
@@ -274,7 +274,7 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
     }
     
     
-    func removeInactiveDriverFromDatabase(logoff: Bool) {
+    func removeInactiveDriverFromDatabase(_ logoff: Bool) {
         self.refToDatabase = FIRDatabase.database().reference()
         
         if self.refToDriverData != nil {
@@ -283,7 +283,7 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
             let numberOfDriversRef = self.refToDatabase.child("rideInfo").child("numberOfDrivers")
             
             if isDriverActive! {
-                numberOfDriversRef.observeSingleEventOfType(.Value, withBlock: { (snapshot) -> Void in
+                numberOfDriversRef.observeSingleEvent(of: .value, with: { (snapshot) -> Void in
                     if snapshot.key == "numberOfDrivers" {
                         var numberOfDrivers = snapshot.value as! Int
                         numberOfDrivers -= 1
@@ -311,7 +311,7 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
         if let currentLocation = locationManager.location {
             let geoCoder = CLGeocoder()
             
-            geoCoder.reverseGeocodeLocation(currentLocation, completionHandler: { (let placemarks : [CLPlacemark]?, let error : NSError?) -> Void in
+            geoCoder.reverseGeocodeLocation(currentLocation, completionHandler: { (placemarks, error) in
                 if error != nil {
                     print("Error getting user location")
                     self.addActiveDriverToDatabase("Unknown")
@@ -324,11 +324,12 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
                     return
                 }
             })
+        } else {
+           self.addActiveDriverToDatabase("Unknown")
         }
-        self.addActiveDriverToDatabase("Unknown")
     }
     
-    func parseAddress(selectedItem : CLPlacemark) -> String {
+    func parseAddress(_ selectedItem : CLPlacemark) -> String {
         // put a space between "4" and "Melrose Place"
         let firstSpace = (selectedItem.subThoroughfare != nil && selectedItem.thoroughfare != nil) ? " " : ""
         // put a comma between street and city/state
@@ -355,15 +356,15 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
     
     
     
-    @IBAction func logout(sender: AnyObject) {
-        NSUserDefaults.standardUserDefaults().setBool(false, forKey: "hasLoginKey")
+    @IBAction func logout(_ sender: AnyObject) {
+        UserDefaults.standard.set(false, forKey: "hasLoginKey")
         self.removeInactiveDriverFromDatabase(true)
     }
     
     func completeLogout() {
         do {
             try FIRAuth.auth()!.signOut()
-            self.performSegueWithIdentifier("driverProfileToLogin", sender: self)
+            self.performSegue(withIdentifier: "driverProfileToLogin", sender: self)
         } catch let signOutError as NSError {
             print("Error signing out: \(signOutError)")
         }
@@ -376,11 +377,11 @@ class DriverProfileViewController: UIViewController, UITextFieldDelegate, UIImag
     
 
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let segID = segue.identifier
         
         if segID == "driverProfileToQueue" {
-            let destinationViewController = segue.destinationViewController as! DriverQueueViewController
+            let destinationViewController = segue.destination as! DriverQueueViewController
             
             destinationViewController.driverName = self.driverName
             destinationViewController.driverPhoneNumber = self.driverPhoneNumber

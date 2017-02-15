@@ -54,23 +54,23 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     var refToDatabase : FIRDatabaseReference!
     var refToExactRide : FIRDatabaseReference!
     var refToDriver : FIRDatabaseReference!
-    private var _refHandle : FIRDatabaseHandle!
+    fileprivate var _refHandle : FIRDatabaseHandle!
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // status bar
         self.setNeedsStatusBarAppearanceUpdate()
-        UIApplication.sharedApplication().statusBarStyle = .LightContent
-        let statusBarFrame = UIApplication.sharedApplication().statusBarFrame
+        UIApplication.shared.statusBarStyle = .lightContent
+        let statusBarFrame = UIApplication.shared.statusBarFrame
         let view = UIView(frame: statusBarFrame)
         view.backgroundColor = UIColor(red: 2/255, green: 0/255, blue: 130/255, alpha: 1.0)
         self.view.addSubview(view)
         
         // Hide Open in Maps and contact buttons
-        openInMapsButton.hidden = true
-        callButton.hidden = true
-        messageButton.hidden = true
+        openInMapsButton.isHidden = true
+        callButton.isHidden = true
+        messageButton.isHidden = true
         
         
         locationManager.delegate = self
@@ -86,12 +86,12 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
         self.displayDestinationPlacemark()
     }
     
-    override func preferredStatusBarStyle() -> UIStatusBarStyle {
-        return UIStatusBarStyle.LightContent
+    override var preferredStatusBarStyle : UIStatusBarStyle {
+        return UIStatusBarStyle.lightContent
     }
     
     
-    @IBAction func acceptRide(sender: AnyObject) {
+    @IBAction func acceptRide(_ sender: AnyObject) {
         // Check if it's the "End Ride" button
         if (acceptButton.titleLabel?.text == "End Ride") {
             self.endRideButtonPressed()
@@ -99,7 +99,7 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
         }
         
         if !self.isDriverActive! {
-            let alert = UIAlertController(title: "Buzz!", message: "Please turn on active driver status before accepting any rides.", preferredStyle: UIAlertControllerStyle.Alert)
+            let alert = UIAlertController(title: "Buzz!", message: "Please turn on active driver status before accepting any rides.", preferredStyle: UIAlertControllerStyle.alert)
             self.presentAlert(alert)
             return
         }
@@ -110,12 +110,12 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
         self.refToExactRide = self.refToDatabase.child("queue").child(self.rideDatabaseKey!)
         self.refToDriver = self.refToDatabase.child("drivers").child("\(self.driverName!)")
         
-        self.refToExactRide.child("driverOnRide").observeSingleEventOfType(.Value, withBlock: { (snapshot) -> Void in
+        self.refToExactRide.child("driverOnRide").observeSingleEvent(of: .value, with: { (snapshot) -> Void in
             if snapshot.key == "driverOnRide" {
                 let driverOnRide = snapshot.value as! String
                 
                 if driverOnRide != "None" {
-                    let alert = UIAlertController(title: "Buzz!", message: "There is already a driver on this ride! Please choose another", preferredStyle: UIAlertControllerStyle.Alert)
+                    let alert = UIAlertController(title: "Buzz!", message: "There is already a driver on this ride! Please choose another", preferredStyle: UIAlertControllerStyle.alert)
                     self.presentAlert(alert)
                 } else {
                     self.refToExactRide.child("driverOnRide").setValue(self.driverName)
@@ -128,11 +128,11 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     }
     
     func rideHasBeenAccepted() {
-        openInMapsButton.hidden = false
-        callButton.hidden = false
-        messageButton.hidden = false
-        acceptButton.setTitle("End Ride", forState: .Normal)
-        acceptButton.backgroundColor = UIColor.redColor()
+        openInMapsButton.isHidden = false
+        callButton.isHidden = false
+        messageButton.isHidden = false
+        acceptButton.setTitle("End Ride", for: UIControlState())
+        acceptButton.backgroundColor = UIColor.red
         
         // do routing for both the driver to the user, and the pickup to end location
         // rudimentary routing (just show an overlay between the start and end locations) and update the distance; then push the ETA
@@ -150,10 +150,10 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
             currentRide?.getRoute((currentRide?.passengerPickUpLocation)!, endLocation: (currentRide?.passengerDestination)!, routeType: "userRoute", viewController: "RideInfoViewController")
         }
         
-        _refHandle = self.refToExactRide.observeEventType(.ChildRemoved, withBlock: { (snapshot) -> Void in
+        _refHandle = self.refToExactRide.observe(.childRemoved, with: { (snapshot) -> Void in
             // this might mean that the rider cancelled the ride
             if self.driverCurrentlyOnRide! {
-                let alert = UIAlertController(title: "Buzz!", message: "User has cancelled the ride. If this was unexpected, please report the situation.", preferredStyle: UIAlertControllerStyle.Alert)
+                let alert = UIAlertController(title: "Buzz!", message: "User has cancelled the ride. If this was unexpected, please report the situation.", preferredStyle: UIAlertControllerStyle.alert)
                 self.presentAlert(alert)
                 self.endRideButtonPressed()
             }
@@ -170,7 +170,7 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
             self.refToDatabase.child("drivers").child("\(self.driverName!)").child("eta").setValue("\(currentRide?.eta)")
             
             self.routeOverlay = "DriverRoute"
-            self.mapView.addOverlay(routeDriverToPickup.polyline)
+            self.mapView.add(routeDriverToPickup.polyline)
             self.distanceLabel.text = "Distance: \(currentRide?.getMiles(routeDriverToPickup.distance)) miles"
             
             if let curLocation = locationManager.location, let pickupLoc = currentRide?.passengerPickUpLocation {
@@ -183,17 +183,17 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     func didReceiveCallbackForUserRouteInformation() {
         if let routePickupToDest = currentRide?.userRoute {
             self.routeOverlay = "UserRoute"
-            self.mapView.addOverlay(routePickupToDest.polyline)
+            self.mapView.add(routePickupToDest.polyline)
         }
     }
     
     
     func endRideButtonPressed() {
-        acceptButton.setTitle("Accept", forState: .Normal)
+        acceptButton.setTitle("Accept", for: UIControlState())
         acceptButton.backgroundColor = UIColor(red: 0.0/255, green: 122.0/255, blue: 255.0/255, alpha: 1)
-        openInMapsButton.hidden = true
-        callButton.hidden = true
-        messageButton.hidden = true
+        openInMapsButton.isHidden = true
+        callButton.isHidden = true
+        messageButton.isHidden = true
         self.driverCurrentlyOnRide = false
         
         if self.refToExactRide != nil {
@@ -204,51 +204,51 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
             self.refToDriver.child("driverOnRide").setValue("false")
         }
         
-        self.performSegueWithIdentifier("rideToQueue", sender: self)
+        self.performSegue(withIdentifier: "rideToQueue", sender: self)
     }
     
     
-    @IBAction func openInMaps(sender: AnyObject) {
+    @IBAction func openInMaps(_ sender: AnyObject) {
         
         
         let regionDistance:CLLocationDistance = 2000
         if let coordinates = currentRide?.passengerPickUpLocation?.coordinate {
             let regionSpan = MKCoordinateRegionMakeWithDistance(coordinates, regionDistance, regionDistance)
             let options = [
-                MKLaunchOptionsMapCenterKey: NSValue(MKCoordinate: regionSpan.center),
-                MKLaunchOptionsMapSpanKey: NSValue(MKCoordinateSpan: regionSpan.span)
+                MKLaunchOptionsMapCenterKey: NSValue(mkCoordinate: regionSpan.center),
+                MKLaunchOptionsMapSpanKey: NSValue(mkCoordinateSpan: regionSpan.span)
             ]
             let placemark = MKPlacemark(coordinate: coordinates, addressDictionary: nil)
             let mapItem = MKMapItem(placemark: placemark)
             mapItem.name = "Passenger Pickup Location"
-            mapItem.openInMapsWithLaunchOptions(options)
+            mapItem.openInMaps(launchOptions: options)
         }
     }
     
     
-    @IBAction func callRider(sender: AnyObject) {
-        if let phoneNumber = self.passengerPhoneNumber, let url = NSURL(string: "tel://\(phoneNumber)")  {
-            UIApplication.sharedApplication().openURL(url)
+    @IBAction func callRider(_ sender: AnyObject) {
+        if let phoneNumber = self.passengerPhoneNumber, let url = URL(string: "tel://\(phoneNumber)")  {
+            UIApplication.shared.openURL(url)
         }
     }
     
     
-    @IBAction func messageRider(sender: AnyObject) {
+    @IBAction func messageRider(_ sender: AnyObject) {
         if let phoneNumber = self.passengerPhoneNumber {
             self.messageComposer.textMessageRecipient = phoneNumber
             if (messageComposer.canSendText()) {
                 let messageComposeVC = messageComposer.configuredMessageComposeViewController()
-                self.presentViewController(messageComposeVC, animated: true, completion: nil)
+                self.present(messageComposeVC, animated: true, completion: nil)
             } else {
-                let alert = UIAlertController(title: "Buzz!", message: "Your device is unable to send text messages right now.", preferredStyle: UIAlertControllerStyle.Alert)
+                let alert = UIAlertController(title: "Buzz!", message: "Your device is unable to send text messages right now.", preferredStyle: UIAlertControllerStyle.alert)
                 self.presentAlert(alert)
             }
         }
     }
     
     func setLabels() {
-        self.startAddressTextField.userInteractionEnabled = false
-        self.endAddressTextField.userInteractionEnabled = false
+        self.startAddressTextField.isUserInteractionEnabled = false
+        self.endAddressTextField.isUserInteractionEnabled = false
         
         self.nameLabel.text = passengerName
         self.startAddressTextField.text = startAddressString
@@ -262,7 +262,7 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
         // consider just adding the user's start and end coordinates to the database and just using that information... Might be more precise than geocoding the address string
         let geoCoder = CLGeocoder()
         
-        geoCoder.geocodeAddressString(startAddressString!, completionHandler: { (let placemarks : [CLPlacemark]?, let error : NSError?) -> Void in
+        geoCoder.geocodeAddressString(startAddressString!, completionHandler: { (placemarks, error) -> Void in
             
             if error != nil {
                 print("Error with geocoding")
@@ -284,7 +284,7 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
         
         let geoCoder = CLGeocoder()
         
-        geoCoder.geocodeAddressString(endAddressString!, completionHandler: { (let placemarks : [CLPlacemark]?, let error : NSError?) -> Void in
+        geoCoder.geocodeAddressString(endAddressString!, completionHandler: { (placemarks, error) -> Void in
             
             if error != nil {
                 print("Error with geocoding")
@@ -302,7 +302,7 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     
     
     
-    @IBAction func centerOnDriverLocation(sender: AnyObject) {
+    @IBAction func centerOnDriverLocation(_ sender: AnyObject) {
         let mapSpan = MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
         if let coord = locationManager.location?.coordinate {
             let mapRegion = MKCoordinateRegion(center: coord, span: mapSpan)
@@ -313,7 +313,7 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
         }
     }
     
-    func regionForTwoPoints(let locationOne : CLLocation, let locationTwo : CLLocation) -> MKCoordinateRegion {
+    func regionForTwoPoints(_ locationOne : CLLocation, locationTwo : CLLocation) -> MKCoordinateRegion {
         var center = CLLocationCoordinate2D()
         
         let lon1 = locationOne.coordinate.longitude * M_PI / 180
@@ -337,8 +337,8 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     }
     
     
-    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
-        if status == .AuthorizedWhenInUse {
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        if status == .authorizedWhenInUse {
             print("We have authorization")
             mapView.showsUserLocation = true
             mapView.userLocation.title = nil
@@ -350,23 +350,24 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     }
     
     
-    func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
-        if annotation.isKindOfClass(MKUserLocation) {
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        if annotation.isKind(of: MKUserLocation.self) {
             return nil
         }
         
-        var annotationViewBase = mapView.dequeueReusableAnnotationViewWithIdentifier("pin")
+        var annotationViewBase = mapView.dequeueReusableAnnotationView(withIdentifier: "pin")
         
         if annotationViewBase == nil {
             let userAnnotationView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "pin")
             
-            if annotation.isMemberOfClass(UserAnnotation) {
+            // changed to self 
+            if annotation.isMember(of: UserAnnotation.self) {
                 userAnnotationView.canShowCallout = true
                 
                 if annotation.title! == "Pickup Location" {
-                    userAnnotationView.pinTintColor = UIColor.greenColor()
+                    userAnnotationView.pinTintColor = UIColor.green
                 } else if annotation.title! == "Drop off Location" {
-                    userAnnotationView.pinTintColor = UIColor.redColor()
+                    userAnnotationView.pinTintColor = UIColor.red
                 }
             }
             annotationViewBase = userAnnotationView
@@ -376,7 +377,7 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
         return annotationViewBase
     }
     
-    func mapView(mapView: MKMapView, rendererForOverlay overlay: MKOverlay) -> MKOverlayRenderer {
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         if self.routeOverlay == "DriverRoute" {
             let myLineRenderer = MKPolylineRenderer(polyline: self.currentRide!.driverRoute!.polyline)
             myLineRenderer.strokeColor = UIColor(red: 2.0/255, green: 0.0/255, blue: 130.0/255, alpha: 1)
@@ -390,10 +391,10 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
         return myLineRenderer
     }
     
-    func presentAlert(alert : UIAlertController?) {
+    func presentAlert(_ alert : UIAlertController?) {
         if let alertError = alert {
-            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alertError, animated: true, completion: nil)
+            alertError.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alertError, animated: true, completion: nil)
         }
     }
     
@@ -405,22 +406,22 @@ class RideInfoViewController: UIViewController, CLLocationManagerDelegate, MKMap
     
     // MARK: - Navigation
     
-    @IBAction func segueBackToQueue(sender: AnyObject) {
+    @IBAction func segueBackToQueue(_ sender: AnyObject) {
         if driverCurrentlyOnRide! {
-            let alert = UIAlertController(title: "Buzz!", message: "Complete this ride before beginning a new one.", preferredStyle: UIAlertControllerStyle.Alert)
+            let alert = UIAlertController(title: "Buzz!", message: "Complete this ride before beginning a new one.", preferredStyle: UIAlertControllerStyle.alert)
             self.presentAlert(alert)
         } else {
-            self.performSegueWithIdentifier("rideToQueue", sender: self)
+            self.performSegue(withIdentifier: "rideToQueue", sender: self)
         }
     }
     
     
     
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let segID = segue.identifier
         
         if segID == "rideToQueue" {
-            let destinationViewController = segue.destinationViewController as! DriverQueueViewController
+            let destinationViewController = segue.destination as! DriverQueueViewController
             
             destinationViewController.driverName = self.driverName
             destinationViewController.driverEmailAddress = self.driverEmail

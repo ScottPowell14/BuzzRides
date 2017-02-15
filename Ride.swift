@@ -53,8 +53,8 @@ class Ride {
     var ref : FIRDatabaseReference!
     var refToRideData : FIRDatabaseReference!
     var rideDatabaseKey : String?
-    private var _refForDriverHandle : FIRDatabaseHandle!
-    private var _refForRideHandle : FIRDatabaseHandle!
+    fileprivate var _refForDriverHandle : FIRDatabaseHandle!
+    fileprivate var _refForRideHandle : FIRDatabaseHandle!
     var storageRef : FIRStorageReference?
     
     
@@ -80,7 +80,7 @@ class Ride {
     }
     
     // init with Firebase ride snapshot
-    init(let rideContents : FIRDataSnapshot) {
+    init(rideContents : FIRDataSnapshot) {
         rideDatabaseKey = rideContents.key
         
         let rideData : [String : String] = rideContents.value as! [String : String]
@@ -109,7 +109,7 @@ class Ride {
     }
     
     // update location data
-    func updateLocationData(newPassengerLoc : CLLocation, newPickUpLoc : CLLocation, newDestination : CLLocation, driverLoc : CLLocation) {
+    func updateLocationData(_ newPassengerLoc : CLLocation, newPickUpLoc : CLLocation, newDestination : CLLocation, driverLoc : CLLocation) {
         self.passengerLocation = newPassengerLoc
         self.passengerPickUpLocation = newPickUpLoc
         self.passengerDestination = newDestination
@@ -119,7 +119,7 @@ class Ride {
     }
     
     // call when the driver selects the Ride object from the realtime database
-    func updateDriverData(newName : String?, newPhoneNumber : String?, driverLoc : CLLocation?, driverPhoto : NSURL?) {
+    func updateDriverData(_ newName : String?, newPhoneNumber : String?, driverLoc : CLLocation?, driverPhoto : URL?) {
         driverName = newName
         driverPhoneNumber = newPhoneNumber
         driverLocation = driverLoc
@@ -137,12 +137,12 @@ class Ride {
             
             directionsRequest.source = MKMapItem(placemark: driverPlacemark)
             directionsRequest.destination = MKMapItem(placemark: userPlacemark)
-            directionsRequest.transportType = MKDirectionsTransportType.Automobile
+            directionsRequest.transportType = MKDirectionsTransportType.automobile
             directionsRequest.requestsAlternateRoutes = false
                 
             let directions = MKDirections(request: directionsRequest)
             
-            directions.calculateDirectionsWithCompletionHandler({ response, error in
+            directions.calculate(completionHandler: { response, error in
                 if error != nil {
                     print("Error calculating direcitons")
                     return
@@ -156,7 +156,7 @@ class Ride {
         }
     }
     
-    func getRoute(let startLocation : CLLocation, let endLocation : CLLocation, let routeType : String, let viewController : String) {
+    func getRoute(_ startLocation : CLLocation, endLocation : CLLocation, routeType : String, viewController : String) {
         let directionsRequest = MKDirectionsRequest()
         
         // var route : MKRoute?
@@ -165,12 +165,12 @@ class Ride {
             
         directionsRequest.source = MKMapItem(placemark: startPlacemark)
         directionsRequest.destination = MKMapItem(placemark: endPlacemark)
-        directionsRequest.transportType = MKDirectionsTransportType.Automobile
+        directionsRequest.transportType = MKDirectionsTransportType.automobile
         directionsRequest.requestsAlternateRoutes = false
             
         let directions = MKDirections(request: directionsRequest)
             
-        directions.calculateDirectionsWithCompletionHandler({ response, error in
+        directions.calculate(completionHandler: { response, error in
             if error != nil {
                 print("Error calculating direcitons")
                 return
@@ -191,17 +191,17 @@ class Ride {
     }
     
     
-    func getEta(let travelTimeSeconds : NSTimeInterval) -> Int {
+    func getEta(_ travelTimeSeconds : TimeInterval) -> Int {
         return Int(travelTimeSeconds / 60)
     }
     
-    func getMiles(distanceInMeters : CLLocationDistance) -> Double {
+    func getMiles(_ distanceInMeters : CLLocationDistance) -> Double {
         return Double(round(distanceInMeters * 0.000621371 * 100)/100)
     }
     
     func callDriver() {
-        if let phoneNumber = self.driverPhoneNumber, let url = NSURL(string: "tel://\(phoneNumber)")  {
-            UIApplication.sharedApplication().openURL(url)
+        if let phoneNumber = self.driverPhoneNumber, let url = URL(string: "tel://\(phoneNumber)")  {
+            UIApplication.shared.openURL(url)
         }
     }
     
@@ -210,9 +210,9 @@ class Ride {
             self.messageComposer.textMessageRecipient = phoneNumber
             if (messageComposer.canSendText()) {
                 let messageComposeVC = messageComposer.configuredMessageComposeViewController()
-                self.viewController?.presentViewController(messageComposeVC, animated: true, completion: nil)
+                self.viewController?.present(messageComposeVC, animated: true, completion: nil)
             } else {
-                let alert = UIAlertController(title: "Buzz!", message: "Your device is unable to send text messages right now.", preferredStyle: UIAlertControllerStyle.Alert)
+                let alert = UIAlertController(title: "Buzz!", message: "Your device is unable to send text messages right now.", preferredStyle: UIAlertControllerStyle.alert)
                 self.viewController?.presentAlert(alert)
             }
         }
@@ -223,6 +223,7 @@ class Ride {
     func checkIfValidRide() -> Bool {
         // if valid ride
         return true
+        
         
         // if not valid ride
         // return false
@@ -245,7 +246,7 @@ class Ride {
     
     func updateListenerForDriver() {
         // Calculate estimated wait time while in queue, before driver accepts ride
-        self.ref.child("rideInfo").observeSingleEventOfType(.Value, withBlock: { (snapshot) -> Void in
+        self.ref.child("rideInfo").observeSingleEvent(of: .value, with: { (snapshot) -> Void in
             
             let queueData : [String : Int] = snapshot.value as! [String : Int]
             
@@ -276,7 +277,7 @@ class Ride {
         
         
         
-        _refForDriverHandle = self.refToRideData.observeEventType(.ChildChanged, withBlock: { (snapshot) -> Void in
+        _refForDriverHandle = self.refToRideData.observe(.childChanged, with: { (snapshot) -> Void in
             
             if snapshot.key == "driverOnRide" {
                 let driverName = snapshot.value as! String
@@ -291,7 +292,7 @@ class Ride {
     
     func updateRideWithDriverInfo() {
         // update the rest of the driver info on the ride object with database information
-        self.ref.child("drivers").child("\(self.driverName!)").observeSingleEventOfType(.Value, withBlock: { (snapshot) -> Void in
+        self.ref.child("drivers").child("\(self.driverName!)").observeSingleEvent(of: .value, with: { (snapshot) -> Void in
         
             let driverData = snapshot.value as! [String : String]
             
@@ -301,22 +302,22 @@ class Ride {
                 } else if driverInfo.0 == "phone" {
                     self.driverPhoneNumber = driverInfo.1
                 } else if driverInfo.0 == "placeInQueue" {
-                    self.placeInQueue = NSNumberFormatter().numberFromString(driverInfo.1) as? Int
+                    self.placeInQueue = NumberFormatter().number(from: driverInfo.1) as? Int
                 } else if driverInfo.0 == "eta" {
-                    self.eta = NSNumberFormatter().numberFromString(driverInfo.1) as? Int
+                    self.eta = NumberFormatter().number(from: driverInfo.1) as? Int
                 }
             }
         
             let storage = FIRStorage.storage()
-            self.storageRef = storage.referenceForURL("gs://bamboo-d0a7d.appspot.com")
+            self.storageRef = storage.reference(forURL: "gs://bamboo-d0a7d.appspot.com")
             let storagePath = "\(self.driverName!).jpeg"
             let photoReference = self.storageRef?.child("DriversPhotos/\(storagePath)")
             
-            let documentsURL = NSFileManager.defaultManager().URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)[0]
-            let imageURL = documentsURL.URLByAppendingPathComponent(storagePath)
+            let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let imageURL = documentsURL.appendingPathComponent(storagePath)
             
             // have a placeholder image in place, if there is an issue downloading driver photo
-            photoReference?.dataWithMaxSize(1000000, completion: { (data, error) in
+            photoReference?.data(withMaxSize: 1000000, completion: { (data, error) in
                 if error != nil {
                     print("Error downloading image: \(error)")
                     self.driverPhoto = UIImage(named: "defaultDriverImage")
@@ -331,7 +332,7 @@ class Ride {
             })
         })
         
-        _refForRideHandle = self.refToRideData.observeEventType(.ChildRemoved, withBlock: { (snapshot) -> Void in
+        _refForRideHandle = self.refToRideData.observe(.childRemoved, with: { (snapshot) -> Void in
             // this might mean that the driver cancelled the ride -- In which case, ride is over, show modal view
             if self.viewController!.userCurrentlyOnRide! {
                 self.viewController?.cancelButtonPressed()

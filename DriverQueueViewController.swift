@@ -20,7 +20,7 @@ class DriverQueueViewController: UIViewController, UITableViewDelegate, UITableV
     
     // Firebase
     var ref : FIRDatabaseReference! // reference to the database
-    private var _refHandle : FIRDatabaseHandle! // handle in order to receive updates to database
+    fileprivate var _refHandle : FIRDatabaseHandle! // handle in order to receive updates to database
     var queue : [FIRDataSnapshot]! = [] // array of rides in queue in the database format (JSON)
     
     // UI Elements
@@ -36,10 +36,10 @@ class DriverQueueViewController: UIViewController, UITableViewDelegate, UITableV
         
         if (isDriverActive!) {
             self.activeDriverLabel.title = "Active"
-            self.activeDriverLabel.tintColor = UIColor.greenColor()
+            self.activeDriverLabel.tintColor = UIColor.green
         } else {
             self.activeDriverLabel.title = "Not Active"
-            self.activeDriverLabel.tintColor = UIColor.redColor()
+            self.activeDriverLabel.tintColor = UIColor.red
         }
         
         
@@ -49,16 +49,16 @@ class DriverQueueViewController: UIViewController, UITableViewDelegate, UITableV
         
         // status bar configuration
         self.setNeedsStatusBarAppearanceUpdate()
-        UIApplication.sharedApplication().statusBarStyle = .LightContent // if you want to change this back, implement it to set to the default style in the viewDidDisappear method
-        let statusBarFrame = UIApplication.sharedApplication().statusBarFrame
+        UIApplication.shared.statusBarStyle = .lightContent // if you want to change this back, implement it to set to the default style in the viewDidDisappear method
+        let statusBarFrame = UIApplication.shared.statusBarFrame
         let view = UIView(frame: statusBarFrame)
         view.backgroundColor = UIColor(red: 2/255, green: 0/255, blue: 130/255, alpha: 1.0)
         self.view.addSubview(view)
         
     }
     
-    override func preferredStatusBarStyle() -> UIStatusBarStyle {
-        return UIStatusBarStyle.LightContent
+    override var preferredStatusBarStyle : UIStatusBarStyle {
+        return UIStatusBarStyle.lightContent
     }
     
     
@@ -66,7 +66,7 @@ class DriverQueueViewController: UIViewController, UITableViewDelegate, UITableV
         ref = FIRDatabase.database().reference()
         let queueRef = ref.child("queue")
         
-        _refHandle = queueRef.observeEventType(.Value, withBlock: { (snapshot) -> Void in
+        _refHandle = queueRef.observe(.value, with: { (snapshot) -> Void in
             self.rides.removeAll()
             
             for rideContents in snapshot.children {
@@ -83,35 +83,35 @@ class DriverQueueViewController: UIViewController, UITableViewDelegate, UITableV
     }
     
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return rides.count
     }
     
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         // this is if the driver selects a ride from the table view -- go to new view controller with more passenger information, map, and the request button
-        print("Table View Cell hit at \(indexPath.row)")
-        selectedRide = rides[indexPath.row]
+        print("Table View Cell hit at \((indexPath as NSIndexPath).row)")
+        selectedRide = rides[(indexPath as NSIndexPath).row]
         
-        self.performSegueWithIdentifier("queueToRide", sender: self)
+        self.performSegue(withIdentifier: "queueToRide", sender: self)
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let nib = UINib(nibName: "RideCell", bundle: nil)
-        tableView.registerNib(nib, forCellReuseIdentifier: "rideCell")
-        let rideCell = tableView.dequeueReusableCellWithIdentifier("rideCell") as! RideTableViewCell
+        tableView.register(nib, forCellReuseIdentifier: "rideCell")
+        let rideCell = tableView.dequeueReusableCell(withIdentifier: "rideCell") as! RideTableViewCell
         
         
-        if let ride = rides[indexPath.row] {
+        if let ride = rides[(indexPath as NSIndexPath).row] {
             rideCell.nameLabel.text = ride.passengerName
             rideCell.startAddressLabel.text = "From: \(ride.passengerPickUpLocationString!)"
             rideCell.endAddressLabel.text = "To: \(ride.passengerDestinationString!)"
             
             if ride.driverOnRide! {
                 rideCell.driverOnRideLabel.text = "Driver on Ride: YES"
-                rideCell.driverOnRideLabel.textColor = UIColor.greenColor()
+                rideCell.driverOnRideLabel.textColor = UIColor.green
             } else {
                 rideCell.driverOnRideLabel.text = "Driver on Ride : NO"
-                rideCell.driverOnRideLabel.textColor = UIColor.redColor()
+                rideCell.driverOnRideLabel.textColor = UIColor.red
             }
             
             rideCell.partySizeLabel.text = "Party Size: \(ride.numberOfPassengers!)"
@@ -131,11 +131,11 @@ class DriverQueueViewController: UIViewController, UITableViewDelegate, UITableV
     
 
     // MARK: - Navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let segID = segue.identifier
         
         if segID == "queueToRide" {
-            let destinationViewController = segue.destinationViewController as! RideInfoViewController
+            let destinationViewController = segue.destination as! RideInfoViewController
             
             // passenger and ride information
             destinationViewController.currentRide = selectedRide
@@ -156,7 +156,7 @@ class DriverQueueViewController: UIViewController, UITableViewDelegate, UITableV
         }
         
         if segID == "queueToDriverProfile" {
-            let destinationViewController = segue.destinationViewController as! DriverProfileViewController
+            let destinationViewController = segue.destination as! DriverProfileViewController
             
             destinationViewController.driverName = self.driverName
             destinationViewController.driverEmail = self.driverEmailAddress

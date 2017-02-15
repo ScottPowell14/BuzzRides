@@ -27,7 +27,7 @@ class ProfileViewController: UIViewController, UITextFieldDelegate {
         super.viewDidLoad()
         
         self.setNeedsStatusBarAppearanceUpdate()
-        let statusBarFrame = UIApplication.sharedApplication().statusBarFrame
+        let statusBarFrame = UIApplication.shared.statusBarFrame
         
         let view = UIView(frame: statusBarFrame)
         view.backgroundColor = UIColor(red: 244/255, green: 250/255, blue: 255/255, alpha: 1.0)
@@ -47,14 +47,14 @@ class ProfileViewController: UIViewController, UITextFieldDelegate {
         self.phoneTextField.text = phoneNumber!
         self.emailTextField.text = emailAddress!
         
-        self.emailTextField.userInteractionEnabled = false
+        self.emailTextField.isUserInteractionEnabled = false
     }
     
-    override func preferredStatusBarStyle() -> UIStatusBarStyle {
-        return UIStatusBarStyle.Default
+    override var preferredStatusBarStyle : UIStatusBarStyle {
+        return UIStatusBarStyle.default
     }
     
-    func textFieldShouldReturn(textField: UITextField) -> Bool {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
     }
@@ -68,11 +68,11 @@ class ProfileViewController: UIViewController, UITextFieldDelegate {
         // Dispose of any resources that can be recreated.
     }
     
-    @IBAction func updateChanges(sender: AnyObject) {
+    @IBAction func updateChanges(_ sender: AnyObject) {
         if self.nameTextField.text == "" || self.phoneTextField.text == "" {
-            let alert = UIAlertController(title: "Buzz!", message: "Please enter your name and phone number.", preferredStyle: UIAlertControllerStyle.Alert)
-            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-            self.presentViewController(alert, animated: true, completion: nil)
+            let alert = UIAlertController(title: "Buzz!", message: "Please enter your name and phone number.", preferredStyle: UIAlertControllerStyle.alert)
+            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
             return
         }
         
@@ -81,9 +81,9 @@ class ProfileViewController: UIViewController, UITextFieldDelegate {
         self.phoneNumber = self.phoneTextField.text
         
         // update user defaults
-        NSUserDefaults.standardUserDefaults().setValue(self.name, forKey: "name")
-        NSUserDefaults.standardUserDefaults().setValue(self.phoneNumber, forKey: "phoneNumber")
-        NSUserDefaults.standardUserDefaults().synchronize()
+        UserDefaults.standard.setValue(self.name, forKey: "name")
+        UserDefaults.standard.setValue(self.phoneNumber, forKey: "phoneNumber")
+        UserDefaults.standard.synchronize()
         
         
         // update firebase database
@@ -91,7 +91,7 @@ class ProfileViewController: UIViewController, UITextFieldDelegate {
         let changeRequest = user?.profileChangeRequest()
         
         changeRequest?.displayName = "\(self.name!),\(self.phoneNumber!)"
-        changeRequest?.commitChangesWithCompletion() { (error) in
+        changeRequest?.commitChanges() { (error) in
             if let error = error {
                 print(error.localizedDescription)
                 return
@@ -99,18 +99,18 @@ class ProfileViewController: UIViewController, UITextFieldDelegate {
         }
         
         
-        let alert = UIAlertController(title: "Buzz!", message: "Your information has been updated.", preferredStyle: UIAlertControllerStyle.Alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.Default, handler: nil))
-        self.presentViewController(alert, animated: true, completion: nil)
+        let alert = UIAlertController(title: "Buzz!", message: "Your information has been updated.", preferredStyle: UIAlertControllerStyle.alert)
+        alert.addAction(UIAlertAction(title: "Ok", style: UIAlertActionStyle.default, handler: nil))
+        self.present(alert, animated: true, completion: nil)
     }
     
     
 
-    @IBAction func logOut(sender: AnyObject) {
-        NSUserDefaults.standardUserDefaults().setBool(false, forKey: "hasLoginKey")
+    @IBAction func logOut(_ sender: AnyObject) {
+        UserDefaults.standard.set(false, forKey: "hasLoginKey")
         do {
             try FIRAuth.auth()!.signOut()
-            self.performSegueWithIdentifier("profileToLogin", sender: self)
+            self.performSegue(withIdentifier: "profileToLogin", sender: self)
         } catch let signOutError as NSError {
             print("Error signing out: \(signOutError)")
         }
@@ -118,9 +118,9 @@ class ProfileViewController: UIViewController, UITextFieldDelegate {
     }
     // MARK: - Navigation
 
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "profileToRequest" {
-            let destinationViewController = segue.destinationViewController as! ViewController
+            let destinationViewController = segue.destination as! ViewController
             
             destinationViewController.name = self.name!
             destinationViewController.phoneNumber = self.phoneNumber!
